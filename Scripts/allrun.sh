@@ -4,12 +4,15 @@
 # This script needs a servers file to run. By default it checks the home/user/servers file.
 # Specify either ip addresses or names one per line in the file or use the -f option. 
 
+# Default file for servers
 FILE="/home/$(id -un)/servers"
+# Specify ssh options
+SSH_OPTIONS='-qo ConnectTimeout=2'
 
 usage () {
     echo "Usage: "$0" [-sv] [-n USERNAME] [-f FILE] [COMMAND]..." >&2
     echo "Executes COMMAND on all servers listed in the specified file." >&2
-    echo "      -f [FILE]     Override default file ("/home/$(id -un)/servers")" >&2
+    echo "      -f [FILE]     Override default file (${FILE})" >&2
     echo "      -n [USERNAME] Username to connect with." >&2
     echo "      -d            Dry run. Commands displayed but not executed." >&2
     echo "      -s            Run as sudo." >&2
@@ -56,7 +59,7 @@ then
     exit 1
 elif [ "$UID" -eq 0 ] && [ "$SUDO" != true ]
 then
-    echo "Use -s tag to run with root." >&2
+    echo "Use -s option to run with root." >&2
     exit 1
 fi
 
@@ -76,12 +79,12 @@ then
         then
             for SERVER in $(cat $FILE)
             do
-                echo "DRY RUN: ssh -qo ConnectTimeout=2 "$USERNAME"@"$SERVER" "sudo" "$COMMAND
+                echo "DRY RUN: ssh "$SSH_OPTIONS" "$USERNAME"@"$SERVER" "sudo" "$COMMAND
             done
         else
             for SERVER in $(cat $FILE)
             do
-                echo "DRY RUN: ssh -qo ConnectTimeout=2 "$USERNAME"@"$SERVER" "$COMMAND
+                echo "DRY RUN: ssh "$SSH_OPTIONS" "$USERNAME"@"$SERVER" "$COMMAND
             done
         fi
     done
@@ -104,7 +107,7 @@ do
         then
             echo "Incorrect username ${USERNAME} or public key on ${SERVER}. Use the -n option to specify username." >&2
         else
-            ssh -qo ConnectTimeout=2 $USERNAME"@"$SERVER $COMMAND 2> /dev/null
+            ssh $SSH_OPTIONS $USERNAME"@"$SERVER $COMMAND 2> /dev/null
             EXITSTATUS=$?
         fi
         
